@@ -24,7 +24,14 @@
 
 import requests
 from typing import List, Dict
-from .config import DISCORD_WEBHOOK_URL
+# from .config import DISCORD_WEBHOOK_URL
+import os
+import dotenv
+
+# Load environment variables
+dotenv.load_dotenv()
+
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
 def sanitize(text: str) -> str:
     """Remove Discord mention triggers"""

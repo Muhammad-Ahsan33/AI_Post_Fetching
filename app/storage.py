@@ -2,12 +2,18 @@ import json
 import os
 from typing import List, Dict, Optional
 from datetime import datetime, timezone, timedelta
-from .config import DATA_FILE
+# from .config import DATA_FILE
+import os
+import dotenv
+
+# Load environment variables
+dotenv.load_dotenv()
 
 # Configuration
 MAX_STORAGE_AGE_DAYS = 30  # Archive posts older than this
 MAX_STORAGE_SIZE = 10000    # Maximum posts to keep
 
+DATA_FILE = os.getenv("DATA_FILE", default="data/posts.json")
 
 def load_data() -> List[Dict]:
     """Load stored posts from JSON file"""

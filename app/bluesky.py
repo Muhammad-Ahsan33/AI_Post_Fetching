@@ -2,7 +2,15 @@ import requests
 import time
 from typing import List, Dict, Optional
 from datetime import datetime, timezone
-from .config import MAX_POSTS_PER_KEYWORD
+# from .config import MAX_POSTS_PER_KEYWORD
+import os
+import dotenv
+
+# Load environment variables
+dotenv.load_dotenv()
+
+# Load max posts per keyword from config or use default
+MAX_POSTS_PER_KEYWORD = int(os.getenv("MAX_POSTS_PER_KEYWORD"))
 
 BLUESKY_API_URL = "https://api.bsky.app/xrpc/app.bsky.feed.searchPosts"
 
@@ -169,8 +177,9 @@ def fetch_posts_since_timestamp(keyword: str, since: datetime, max_posts: int = 
             response = requests.get(BLUESKY_API_URL, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
-            
+
             posts = data.get("posts", [])
+
             if not posts:
                 break
             

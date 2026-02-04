@@ -1,15 +1,23 @@
+from requests import post
 from .keywords import KEYWORDS
 from .bluesky import fetch_all, fetch_all_since_timestamp, filter_recent_posts, at_uri_to_web_url
 from .ai_agent import classify_post
 from .storage import load_data, save_data, add_post, is_duplicate
 from .discord_notify import send_batch_notification
-from .config import FETCH_INTERVAL_HOURS
+# from .config import FETCH_INTERVAL_HOURS
 from datetime import datetime, timezone, timedelta
 import traceback
+import os
+import dotenv
 
+# Load environment variables
+dotenv.load_dotenv()
+
+# Load fetch interval from config or use default
+FETCH_INTERVAL_HOURS = int(os.getenv("FETCH_INTERVAL_HOURS"))
 # Calculate recency window from config
-# RECENCY_WINDOW_SECONDS = FETCH_INTERVAL_HOURS * 3600  # Convert hours to seconds
-RECENCY_WINDOW_SECONDS = 100
+RECENCY_WINDOW_SECONDS = FETCH_INTERVAL_HOURS * 3600  # Convert hours to seconds
+# RECENCY_WINDOW_SECONDS = 100
 
 # Choose fetching strategy
 USE_TIMESTAMP_FETCH = True  # Set to False to use old method (fetch all + filter)
@@ -53,6 +61,7 @@ def run_pipeline():
             print(f"[Pipeline] 🔍 Fetching posts since {cutoff_time.strftime('%Y-%m-%d %H:%M:%S UTC')}...")
             recent_posts = fetch_all_since_timestamp(KEYWORDS, since=cutoff_time)
             print(f"[Pipeline] ✅ Fetched {len(recent_posts)} recent posts")
+            print("This is Strategy 1 timestamp-based fetching")
         else:
             # Strategy 2: Fetch all + filter (old method with pagination)
             print(f"[Pipeline] 🔍 Fetching posts for {len(KEYWORDS)} keywords...")
@@ -85,6 +94,9 @@ def run_pipeline():
             try:
                 # Normalize post structure
                 post = normalize(raw)
+
+                # Clean text (IMPORTANT: before checks & classification)
+                post["text"] = post["text"].strip()
                 
                 # Skip invalid posts
                 if not post["url"] or not post["text"]:
@@ -100,7 +112,8 @@ def run_pipeline():
                 
                 # AI Classification
                 print(f"[Pipeline] [{i}/{len(recent_posts)}] 🧠 Classifying: {post['author'][:30]}")
-                ai_result = classify_post(post["text"])
+                ai_result = classify_post(post["text"], use_two_stage=True)
+
                 
                 if not ai_result:
                     print(f"[Pipeline] [{i}/{len(recent_posts)}] ❌ Classification failed")
@@ -112,6 +125,15 @@ def run_pipeline():
                     print(f"[Pipeline] [{i}/{len(recent_posts)}] 🚫 Not a commission")
                     rejected_count += 1
                     continue
+
+                confidence = ai_result.get("confidence", 0.0)
+
+                if confidence < 0.75:
+                    print(f"[Pipeline] [{i}/{len(recent_posts)}] ⚠️ Low confidence ({confidence:.0%}), skipping")
+                    rejected_count += 1
+                    continue
+
+
                 
                 # Build web URL
                 username = post["author"]

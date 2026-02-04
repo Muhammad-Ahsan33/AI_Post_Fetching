@@ -10,7 +10,15 @@
 
 import time
 from datetime import datetime
-from .config import FETCH_INTERVAL_HOURS
+# from .config import FETCH_INTERVAL_HOURS
+import os
+import dotenv
+
+# Load environment variables
+dotenv.load_dotenv()
+
+# Load fetch interval from config or use default
+FETCH_INTERVAL_HOURS = int(os.getenv("FETCH_INTERVAL_HOURS"))
 
 def run_forever(task):
     """
@@ -47,8 +55,8 @@ def run_forever(task):
         print(f"[Scheduler] Sleeping for {FETCH_INTERVAL_HOURS} hours...")
         print(f"[Scheduler] Next run at: {datetime.fromtimestamp(time.time() + interval_seconds).strftime('%Y-%m-%d %H:%M:%S')}")
         
-        # time.sleep(interval_seconds)
-        time.sleep(10)  # For testing purposes, sleep for 10 seconds instead of hours
+        time.sleep(interval_seconds)
+        # time.sleep(10)  # For testing purposes, sleep for 10 seconds instead of hours
 
 # Alternative: Use this for testing with shorter intervals
 def run_forever_testing(task, test_interval_seconds=10):
