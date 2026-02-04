@@ -200,18 +200,38 @@ def run_pipeline():
 
 if __name__ == "__main__":
     from .scheduler import run_forever
-    
-    print("""
-    ╔═══════════════════════════════════════════════════════════╗
-    ║   AI COMMISSION HUNTING AGENT                            ║
-    ║   Monitoring BlueSky for commission requests             ║
-    ╚═══════════════════════════════════════════════════════════╝
-    """)
-    
-    try:
-        run_forever(run_pipeline)
-    except KeyboardInterrupt:
-        print("\n[Main] 👋 Shutting down gracefully...")
-    except Exception as e:
-        print(f"\n[Main] ❌ Fatal error: {e}")
-        traceback.print_exc()
+    from flask import Flask
+    import threading
+
+    app = Flask(__name__)
+
+    @app.route("/")
+    def health():
+        return {
+            "status": "ok",
+            "service": "AI Commission Hunting Agent",
+            "uptime": "running"
+        }
+
+    def start_pipeline():
+        print("""
+        ╔═══════════════════════════════════════════════════════════╗
+        ║   AI COMMISSION HUNTING AGENT                              ║
+        ║   Monitoring BlueSky for commission requests               ║
+        ╚═══════════════════════════════════════════════════════════╝
+        """)
+        try:
+            run_forever(run_pipeline)
+        except KeyboardInterrupt:
+            print("\n[Main] 👋 Shutting down gracefully...")
+        except Exception as e:
+            print(f"\n[Main] ❌ Fatal error: {e}")
+            traceback.print_exc()
+
+    # Run pipeline in background thread
+    threading.Thread(target=start_pipeline, daemon=True).start()
+
+    # Run web server (required by Render)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
