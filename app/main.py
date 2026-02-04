@@ -128,7 +128,7 @@ def run_pipeline():
 
                 confidence = ai_result.get("confidence", 0.0)
 
-                if confidence < 0.75:
+                if confidence < 0.90:
                     print(f"[Pipeline] [{i}/{len(recent_posts)}] ⚠️ Low confidence ({confidence:.0%}), skipping")
                     rejected_count += 1
                     continue
