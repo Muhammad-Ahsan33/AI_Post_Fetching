@@ -266,7 +266,7 @@ if not GROQ_API_KEYS:
     raise ValueError("[AI] No Groq API keys found in GROQ_API_KEYS environment variable")
 
 # Configuration
-MAX_DAILY_TOKENS = 2_000_000       # ← increased significantly; adjust to your real limit
+MAX_DAILY_TOKENS = 500000       # ← increased significantly; adjust to your real limit
 TOKEN_SAFETY_MARGIN = 300
 TOKENS_ESTIMATE = 1800             # fallback when real usage not available
 
