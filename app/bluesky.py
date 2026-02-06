@@ -233,6 +233,7 @@ def fetch_all_since_timestamp(keywords: List[str], since: datetime) -> List[Dict
         Combined list of all posts
     """
     print(f"[BlueSky] Fetching posts since {since.isoformat()}...")
+    print(f"[BlueSky] Fetching posts for {len(keywords)} keywords...")
     
     all_posts = []
     for i, keyword in enumerate(keywords, 1):
