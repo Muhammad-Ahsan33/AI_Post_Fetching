@@ -45,7 +45,7 @@ def fetch_posts(keyword: str, max_posts: int = None) -> List[Dict]:
             params["cursor"] = cursor
         
         try:
-            response = requests.get(BLUESKY_API_URL, params=params, timeout=10)
+            response = requests.get(BLUESKY_API_URL, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
             
@@ -174,7 +174,7 @@ def fetch_posts_since_timestamp(keyword: str, since: datetime, max_posts: int = 
             params["cursor"] = cursor
         
         try:
-            response = requests.get(BLUESKY_API_URL, params=params, timeout=10)
+            response = requests.get(BLUESKY_API_URL, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
 
