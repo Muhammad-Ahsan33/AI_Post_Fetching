@@ -19,6 +19,10 @@ FETCH_INTERVAL_HOURS = int(os.getenv("FETCH_INTERVAL_HOURS"))
 RECENCY_WINDOW_SECONDS = FETCH_INTERVAL_HOURS * 3600  # Convert hours to seconds
 # RECENCY_WINDOW_SECONDS = 100
 
+# Overlap window to handle scheduler delays (Render-safe)
+OVERLAP_SECONDS = 30 * 60  # 30 minutes
+
+
 # Choose fetching strategy
 USE_TIMESTAMP_FETCH = True  # Set to False to use old method (fetch all + filter)
 
@@ -56,9 +60,22 @@ def run_pipeline():
         # Fetch posts using selected strategy
         if USE_TIMESTAMP_FETCH:
             # Strategy 1: Timestamp-based fetching (more efficient)
-            cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=RECENCY_WINDOW_SECONDS)
+
+            # cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=RECENCY_WINDOW_SECONDS)
+            now_utc = datetime.now(timezone.utc)
+
+            cutoff_time = now_utc - timedelta(
+                seconds=RECENCY_WINDOW_SECONDS + OVERLAP_SECONDS
+            )
+
+
+            # base_time = datetime(2026, 2, 6, 3, 10, tzinfo=timezone.utc)  # your chosen time
+            # cutoff_time = base_time - timedelta(seconds=RECENCY_WINDOW_SECONDS)
+
+
             print("Cutoff time = ", cutoff_time)
             print(f"[Pipeline] 🔍 Fetching posts since {cutoff_time.strftime('%Y-%m-%d %H:%M:%S UTC')}...")
+            print("Fetching post since last " , FETCH_INTERVAL_HOURS, " hours")
             recent_posts = fetch_all_since_timestamp(KEYWORDS, since=cutoff_time)
             print(f"[Pipeline] ✅ Fetched {len(recent_posts)} recent posts")
             print("This is Strategy 1 timestamp-based fetching")
@@ -70,6 +87,12 @@ def run_pipeline():
             
             if not posts:
                 print("[Pipeline] ⚠️  No posts fetched, ending cycle")
+                try:
+                    send_batch_notification(posts)
+                    print(f"[Pipeline] 📤 Sent batch notification to Discord ({len(posts)} posts)")
+                except Exception as e:
+                    print(f"[Pipeline] ❌ Discord notification failed: {e}")
+                    traceback.print_exc()
                 return
             
             # Filter for recency
@@ -79,6 +102,12 @@ def run_pipeline():
         
         if not recent_posts:
             print("[Pipeline] ℹ️  No recent posts found, ending cycle")
+            try:
+                send_batch_notification(recent_posts)
+                print(f"[Pipeline] 📤 Sent batch notification to Discord ({len(recent_posts)} posts)")
+            except Exception as e:
+                print(f"[Pipeline] ❌ Discord notification failed: {e}")
+                traceback.print_exc()
             return
         
         # Track new qualified posts for batch notification
@@ -128,7 +157,7 @@ def run_pipeline():
 
                 confidence = ai_result.get("confidence", 0.0)
 
-                if confidence < 0.90:
+                if confidence < 0.75:
                     print(f"[Pipeline] [{i}/{len(recent_posts)}] ⚠️ Low confidence ({confidence:.0%}), skipping")
                     rejected_count += 1
                     continue
@@ -172,6 +201,12 @@ def run_pipeline():
                 traceback.print_exc()
         else:
             print("\n[Pipeline] ℹ️  No new qualified posts found")
+            try:
+                send_batch_notification(new_qualified_posts)
+                print(f"[Pipeline] 📤 Sent batch notification to Discord ({len(new_qualified_posts)} posts)")
+            except Exception as e:
+                print(f"[Pipeline] ❌ Discord notification failed: {e}")
+                traceback.print_exc()
         
         # Print summary
         print("\n" + "="*80)
@@ -234,4 +269,3 @@ if __name__ == "__main__":
     # Run web server (required by Render)
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-
