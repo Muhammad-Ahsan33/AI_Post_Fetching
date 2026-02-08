@@ -60,7 +60,17 @@ def send_batch_notification(posts: List[Dict]):
     Handles Discord's 2000 character limit by splitting into multiple messages if needed.
     """
     if not posts:
+        print("Skipping Discord notification: No new posts found.")
+        payload = {
+            "content": "🎨 **Commission Scan Complete**\n\n❌ No new commission requests found in this cycle."
+        }
+        try:
+            response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
+            response.raise_for_status()
+        except Exception as e:
+            print("[Discord] Error sending empty batch notification:", e)
         return
+
     
     # Build the batch message
     header = f"🎨 **Found {len(posts)} New Commission Request(s)**\n\n"
