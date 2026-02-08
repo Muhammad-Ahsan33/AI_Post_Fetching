@@ -1,27 +1,3 @@
-# import requests
-# from .config import DISCORD_WEBHOOK_URL
-
-# def sanitize(text: str) -> str:
-#     return text.replace("@everyone", "@\u200beveryone").replace("@here", "@\u200bhere")
-
-# def send_notification(post):
-#     payload = {
-#         "content": sanitize(
-#             f"🎨 **New Commission Found**\n"
-#             f"👤 {post['author']}\n"
-#             f"📍 {post.get('location','Unknown')}\n"
-#             f"🔗 {post['url']}\n\n"
-#             f"{post['text'][:900]}"
-#         )
-#     }
-#     try:
-#         requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
-#     except Exception as e:
-#         print("[Discord] Error:", e)
-
-
-
-
 import requests
 from typing import List, Dict
 # from .config import DISCORD_WEBHOOK_URL
