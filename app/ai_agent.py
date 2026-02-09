@@ -482,16 +482,36 @@ def classify_post(text: str, use_two_stage: bool = True) -> Optional[Dict]:
 
             return result
 
-        except Exception as e:
+         except Exception as e:
             err_str = str(e).lower()
-            if "rate_limit" in err_str or "429" in err_str:
-                print(f"[AI] Rate limit hit for key ...{key[-6:]} — blacklisting for this call")
-                blacklisted.add(key)
-                time.sleep(1.0 + attempt * 0.8)  # gentle backoff: ~1s → 2.6s → 4.2s...
+
+            # Errors that mean "this key is bad, try another one"
+            retryable_errors = [
+                "rate_limit",
+                "429",
+                "organization has been restricted",
+                "organization_restricted",
+                "invalid api key",
+                "unauthorized",
+                "forbidden",
+                "quota",
+            ]
+
+            if any(err in err_str for err in retryable_errors):
+                print(
+                    f"[AI] Key ...{key[-6:]} unusable ({e}) — blacklisting and retrying"
+                )
+
+                # ✅ blacklist the ANONYMIZED key
+                blacklisted.add(anon_key_for_tracking)
+
+                # gentle backoff
+                time.sleep(1.0 + attempt * 0.8)
                 continue
-            else:
-                print(f"[AI] Error with key ...{key[-6:]}: {e}")
-                return None
+
+            # Truly unexpected error → abort
+            print(f"[AI] Fatal AI error: {e}")
+            return None
 
     print("[AI] ❌ Exhausted all attempts — could not classify post")
     return None
