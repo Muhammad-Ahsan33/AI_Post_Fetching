@@ -3,6 +3,7 @@ from typing import List, Dict
 # from .config import DISCORD_WEBHOOK_URL
 import os
 import dotenv
+import time
 
 # Load environment variables
 dotenv.load_dotenv()
