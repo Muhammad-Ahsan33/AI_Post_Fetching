@@ -80,20 +80,9 @@ def send_batch_notification(posts: List[Dict]):
     # Send all messages
     for msg in messages:
         payload = {"content": msg}
-        
-        while True:
-            try:
-                response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
-    
-                if response.status_code == 429:
-                    retry_after = response.json().get("retry_after", 1)
-                    print(f"[Discord] Rate limited. Retrying after {retry_after} seconds...")
-                    time.sleep(retry_after)
-                    continue
-    
-                response.raise_for_status()
-                break  # Success → exit retry loop
-    
-            except Exception as e:
-                print("[Discord] Error sending batch notification:", e)
-                break
+        try:
+            response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)    
+            response.raise_for_status()    
+        except Exception as e:
+            print("[Discord] Error sending batch notification:", e)
+                
